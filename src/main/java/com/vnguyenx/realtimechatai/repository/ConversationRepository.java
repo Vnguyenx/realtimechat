@@ -10,11 +10,9 @@ import java.util.Optional;
 
 public interface ConversationRepository extends JpaRepository<Conversation, Long> {
 
-    // Tìm conversation đã tồn tại giữa 2 user cụ thể (đã chuẩn hoá thứ tự trước khi gọi)
-    Optional<Conversation> findByUserAIdAndUserBId(Long userAId, Long userBId);
+    Optional<Conversation> findByDirectKey(String directKey);
 
-    // Danh sách TẤT CẢ conversation mà user này tham gia — vẫn cần OR vì user có thể là A hoặc B tuỳ dòng
-    @Query("SELECT c FROM Conversation c WHERE c.userA.id = :userId OR c.userB.id = :userId " +
-           "ORDER BY c.createdAt DESC")
-    List<Conversation> findAllByUserId(@Param("userId") Long userId);
+    @Query("SELECT c FROM Conversation c JOIN ConversationMember m ON m.conversation = c " +
+           "WHERE m.user.id = :userId ORDER BY c.createdAt DESC")
+    List<Conversation> findAllByMemberUserId(@Param("userId") Long userId);
 }

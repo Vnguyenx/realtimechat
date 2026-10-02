@@ -10,6 +10,9 @@ public class SendMessageRequest {
     @NotBlank(message = "Nội dung tin nhắn không được để trống")
     private String content;
 
-    @Pattern(regexp = "^(TEXT|IMAGE)$", message = "messageType chỉ được là TEXT hoặc IMAGE")
-    private String messageType = "TEXT"; // mặc định TEXT nếu client không gửi field này
+    @Pattern(regexp = "^(TEXT|IMAGE|STICKER)$", message = "messageType chỉ được là TEXT, IMAGE hoặc STICKER")
+    private String messageType = "TEXT";
+
+    @Pattern(regexp = "^(LOCAL|KLIPY)$", message = "stickerSource chỉ được là LOCAL hoặc KLIPY")
+    private String stickerSource = "LOCAL"; // chỉ có ý nghĩa khi messageType = STICKER
 }

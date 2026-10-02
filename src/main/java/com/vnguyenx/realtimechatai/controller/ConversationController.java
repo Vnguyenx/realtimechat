@@ -1,7 +1,12 @@
 package com.vnguyenx.realtimechatai.controller;
 
 import com.vnguyenx.realtimechatai.dto.conversation.ConversationResponse;
+import com.vnguyenx.realtimechatai.dto.conversation.ConversationSummaryResponse;
+import com.vnguyenx.realtimechatai.dto.conversation.UpdateNicknameRequest;
 import com.vnguyenx.realtimechatai.service.ConversationService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +33,18 @@ public class ConversationController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ConversationResponse>> getMyConversations(Authentication authentication) {
+    public ResponseEntity<List<ConversationSummaryResponse>> getMyConversations(Authentication authentication) {
         String username = authentication.getName();
         return ResponseEntity.ok(conversationService.getMyConversations(username));
     }
+
+@PutMapping("/{conversationId}/nickname")
+public ResponseEntity<ConversationResponse> updateNickname(
+        Authentication authentication,
+        @PathVariable Long conversationId,
+        @Valid @RequestBody UpdateNicknameRequest request) {
+    String username = authentication.getName();
+    return ResponseEntity.ok(conversationService.updateNickname(username, conversationId, request));
+}
+
 }

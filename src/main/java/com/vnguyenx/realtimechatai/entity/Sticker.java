@@ -6,28 +6,19 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "conversations")
+@Table(name = "stickers")
 @Data
-public class Conversation {
+public class Sticker {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ConversationType type = ConversationType.DIRECT;
-
     private String name;
 
-    @Column(name = "direct_key")
-    private String directKey;
-
-    @Column(name = "last_message")
-    private String lastMessage;
-
-    @Column(name = "last_message_at")
-    private LocalDateTime lastMessageAt;
+    @Column(name = "image_url", nullable = false, unique = true)
+    private String imageUrl;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
