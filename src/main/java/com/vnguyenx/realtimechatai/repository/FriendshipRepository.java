@@ -31,4 +31,6 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
 
     // Danh sách lời mời ĐANG CHỜ mà user này là NGƯỜI GỬI (để hiển thị "Lời mời đã gửi")
     List<Friendship> findByRequesterIdAndStatus(Long requesterId, FriendshipStatus status);
+
+    long countByStatus(FriendshipStatus status);
 }
