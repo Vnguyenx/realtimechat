@@ -93,7 +93,7 @@ private String resolveContent(User sender, SendMessageRequest request) {
         }
         return request.getContent();
     }
-    return type;
+     return request.getContent();
 }
 
 private String buildLastMessagePreview(SendMessageRequest request) {
