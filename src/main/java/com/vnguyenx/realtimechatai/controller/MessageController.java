@@ -1,13 +1,18 @@
 package com.vnguyenx.realtimechatai.controller;
 
 import com.vnguyenx.realtimechatai.dto.message.MessageResponse;
+import com.vnguyenx.realtimechatai.dto.message.ReadReceiptResponse;
 import com.vnguyenx.realtimechatai.dto.message.SendMessageRequest;
 import com.vnguyenx.realtimechatai.service.MessageService;
 import jakarta.validation.Valid;
+
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,9 +21,12 @@ import org.springframework.web.bind.annotation.*;
 public class MessageController {
 
     private final MessageService messageService;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public MessageController(MessageService messageService) {
+
+    public MessageController(MessageService messageService, SimpMessagingTemplate messagingTemplate) {
         this.messageService = messageService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @PostMapping
@@ -26,8 +34,7 @@ public class MessageController {
             Authentication authentication,
             @PathVariable Long conversationId,
             @Valid @RequestBody SendMessageRequest request) {
-        String username = authentication.getName();
-        MessageResponse response = messageService.sendMessage(username, conversationId, request);
+        MessageResponse response = messageService.sendMessage(authentication.getName(), conversationId, request);
         return ResponseEntity.status(201).body(response);
     }
 
@@ -37,17 +44,24 @@ public class MessageController {
             @PathVariable Long conversationId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "6") int size) {
-        String username = authentication.getName();
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(messageService.getMessages(username, conversationId, pageable));
+        return ResponseEntity.ok(messageService.getMessages(authentication.getName(), conversationId, pageable));
     }
 
     @PostMapping("/read")
-    public ResponseEntity<Void> markAsRead(
+    public ResponseEntity<ReadReceiptResponse> markAsRead(
             Authentication authentication,
             @PathVariable Long conversationId) {
-        String username = authentication.getName();
-        messageService.markAsRead(username, conversationId);
-        return ResponseEntity.ok().build();
+        ReadReceiptResponse receipt = messageService.markAsRead(authentication.getName(), conversationId);
+        // Báo cho mọi người đang mở cuộc trò chuyện này: "người X vừa đọc tới tin số N"
+        messagingTemplate.convertAndSend("/topic/conversation." + conversationId + ".read", receipt);
+        return ResponseEntity.ok(receipt);
+    }
+
+    @GetMapping("/read-status")
+    public ResponseEntity<List<ReadReceiptResponse>> getReadStatus(
+            Authentication authentication,
+            @PathVariable Long conversationId) {
+        return ResponseEntity.ok(messageService.getReadStatus(authentication.getName(), conversationId));
     }
 }

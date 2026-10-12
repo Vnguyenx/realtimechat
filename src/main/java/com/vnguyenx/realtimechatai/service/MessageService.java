@@ -1,6 +1,7 @@
 package com.vnguyenx.realtimechatai.service;
 
 import com.vnguyenx.realtimechatai.dto.message.MessageResponse;
+import com.vnguyenx.realtimechatai.dto.message.ReadReceiptResponse;
 import com.vnguyenx.realtimechatai.dto.message.SendMessageRequest;
 import com.vnguyenx.realtimechatai.entity.Conversation;
 import com.vnguyenx.realtimechatai.entity.ConversationMember;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class MessageService {
@@ -111,16 +113,44 @@ private String buildLastMessagePreview(SendMessageRequest request) {
                 .map(this::toResponse);
     }
 
-    public void markAsRead(String username, Long conversationId) {
+    public ReadReceiptResponse markAsRead(String username, Long conversationId) {
         User currentUser = findUserOrThrow(username);
 
         ConversationMember member = conversationMemberRepository
                 .findByConversationIdAndUserId(conversationId, currentUser.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Bạn không có quyền truy cập cuộc trò chuyện này"));
 
+        // Con trỏ chỉ được tiến lên, không bao giờ lùi lại
+        messageRepository.findFirstByConversationIdOrderByIdDesc(conversationId).ifPresent(latest -> {
+            Long current = member.getLastReadMessageId();
+            if (current == null || latest.getId() > current) {
+                member.setLastReadMessageId(latest.getId());
+            }
+        });
+
         member.setUnreadCount(0);
         conversationMemberRepository.save(member);
+
+        return toReadReceipt(member);
     }
+
+    public List<ReadReceiptResponse> getReadStatus(String username, Long conversationId) {
+    User currentUser = findUserOrThrow(username);
+    assertParticipant(conversationId, currentUser.getId());
+
+    return conversationMemberRepository.findByConversationId(conversationId).stream()
+            .map(this::toReadReceipt)
+            .toList();
+}
+
+private ReadReceiptResponse toReadReceipt(ConversationMember m) {
+    return new ReadReceiptResponse(
+            m.getConversation().getId(),
+            m.getUser().getId(),
+            m.getUser().getUsername(),
+            m.getLastReadMessageId());
+}
+
 
     private void updateConversationAfterNewMessage(Conversation conversation, Long senderId, String content) {
         conversation.setLastMessage(content);
@@ -154,7 +184,6 @@ private String buildLastMessagePreview(SendMessageRequest request) {
                 message.getSender().getUsername(),
                 message.getContent(),
                 message.getMessageType(),
-                message.getIsRead(),
                 message.getCreatedAt());
     }
 }

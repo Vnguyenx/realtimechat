@@ -34,4 +34,7 @@ public class ConversationMember {
     @Column(nullable = false)
     private MemberRole role = MemberRole.MEMBER;
 
+    @Column(name = "last_read_message_id")
+    private Long lastReadMessageId;
+
 }
