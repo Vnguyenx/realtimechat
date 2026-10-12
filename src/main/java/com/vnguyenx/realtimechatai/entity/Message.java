@@ -28,9 +28,6 @@ public class Message {
     @Column(name = "message_type", nullable = false)
     private String messageType = "TEXT";
 
-    @Column(name = "is_read", nullable = false)
-    private Boolean isRead = false;
-
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 }

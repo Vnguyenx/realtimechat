@@ -57,7 +57,6 @@ public MessageResponse sendMessage(String senderUsername, Long conversationId, S
     message.setSender(sender);
     message.setContent(finalContent);
     message.setMessageType(request.getMessageType());
-    message.setIsRead(false);
 
     Message saved = messageRepository.save(message);
 
