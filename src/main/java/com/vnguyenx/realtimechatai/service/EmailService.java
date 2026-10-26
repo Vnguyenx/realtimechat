@@ -10,8 +10,9 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
-    private String fromEmail;
+    
+    @Value("${app.mail.from}") private String fromEmail;
+    @Value("${app.frontend-url:http://localhost:5173}") private String frontendUrl;
 
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
@@ -22,11 +23,10 @@ public class EmailService {
         message.setFrom(fromEmail);
         message.setTo(toEmail);
         message.setSubject("Đặt lại mật khẩu - RealtimeChatAI");
-        message.setText(
-            "Bạn vừa yêu cầu đặt lại mật khẩu.\n\n" +
-            "Mã token của bạn là: " + token + "\n\n" +
-            "Mã này có hiệu lực trong 15 phút. Nếu không phải bạn yêu cầu, hãy bỏ qua email này."
-        );
+        String link = frontendUrl + "/reset-password?token=" + token;
+        message.setFrom(fromEmail);
+        message.setText("Bấm vào liên kết để đặt mật khẩu mới:\n" + link +
+    "\n\nLiên kết có hiệu lực 15 phút. Nếu không phải bạn yêu cầu, hãy bỏ qua email này.");
 
         mailSender.send(message);
     }

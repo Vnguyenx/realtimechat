@@ -3,6 +3,8 @@ package com.vnguyenx.realtimechatai.config;
 import com.vnguyenx.realtimechatai.security.CustomUserDetailsService;
 import com.vnguyenx.realtimechatai.security.JwtAuthFilter;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +22,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.io.IOException;
 import java.util.List;
 
 @Configuration
@@ -72,16 +76,28 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/users/invite/**").permitAll()
                         .requestMatchers("/ws-chat/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(
+                                (req, res, e) -> writeJson(res, 401, "Chưa đăng nhập hoặc phiên đăng nhập đã hết hạn"))
+                        .accessDeniedHandler(
+                                (req, res, e) -> writeJson(res, 403, "Bạn không có quyền thực hiện thao tác này")))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+        
+    }
+
+    private static void writeJson(HttpServletResponse res, int status, String message) throws IOException {
+    res.setStatus(status);
+    res.setContentType("application/json;charset=UTF-8");
+    res.getWriter().write("{\"message\":\"" + message + "\"}");
     }
 }

@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.naming.AuthenticationException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -37,9 +39,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleConstraintViolation(
             jakarta.validation.ConstraintViolationException ex) {
         Map<String, String> errors = new HashMap<>();
-        ex.getConstraintViolations().forEach(violation ->
-            errors.put(violation.getPropertyPath().toString(), violation.getMessage())
-        );
+        ex.getConstraintViolations()
+                .forEach(violation -> errors.put(violation.getPropertyPath().toString(), violation.getMessage()));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+public ResponseEntity<Map<String, String>> handleAuthentication(AuthenticationException ex) {
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(Map.of("message", "Sai tên đăng nhập hoặc mật khẩu"));
+}
 }
